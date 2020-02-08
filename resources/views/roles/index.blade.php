@@ -2,7 +2,6 @@
 @section('title', 'Dashboard')
 @section('plugins.Datatables', true)
 
-
 @section('content')
 
 @if ($message = Session::get('success'))
@@ -29,32 +28,12 @@
           <tr>
              <th>No</th>
              <th>Name</th>
-             <th width="280px">Action</th>
+             <th>Action</th>
           </tr>
         </thead>
-          <tbody>
-            @foreach ($roles as $key => $role)
-            <tr>
-                <td>{{ ++$i }}</td>
-                <td>{{ $role->name }}</td>
-                <td>
-                    <a class="btn btn-info" href="{{ route('roles.show',$role->id) }}">Show</a>
-                    @can('role-edit')
-                        <a class="btn btn-primary" href="{{ route('roles.edit',$role->id) }}">Edit</a>
-                    @endcan
-                    @can('role-delete')
-                        {!! Form::open(['method' => 'DELETE','route' => ['roles.destroy', $role->id],'style'=>'display:inline']) !!}
-                            {!! Form::submit('Delete', ['class' => 'btn btn-danger']) !!}
-                        {!! Form::close() !!}
-                    @endcan
-                </td>
-            </tr>
-            @endforeach
-        </tbody>
     </table>
 
 
-{!! $roles->render() !!}
 
   </div>
   <!-- /.card-body -->
@@ -67,7 +46,24 @@
 @section('js')
     <script> 
         $(document).ready( function () {
-              $('#roles_table').DataTable();
+          $.ajaxSetup({
+              headers: {
+                  'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+              }
+          });
+              $('#roles_table').DataTable({
+                processing: true,
+                serverSide: true,
+                ordering: false,
+                ajax: {
+                    url: "{{ route('roles.index') }}",
+                },
+                columns: [
+                    { name: 'id', data: 'id' },
+                    { name: 'name', data: 'name', className: 'text-uppercase' },
+                    { name: 'action', data: 'action' },
+                ],
+            });
           } );
     </script>
 @stop

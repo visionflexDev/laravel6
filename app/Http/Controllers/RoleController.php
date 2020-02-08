@@ -30,9 +30,22 @@ class RoleController extends Controller
      */
     public function index(Request $request)
     {
-        $roles = Role::orderBy('id','DESC')->paginate(5);
-        return view('roles.index',compact('roles'))
-            ->with('i', ($request->input('page', 1) - 1) * 5);
+        if (request()->ajax()) {
+            return datatables()->of(Role::latest()->get())
+                ->addColumn('action', function($data){
+                    $button ='<a class="btn btn-info" href="'.route('roles.show',$data->id).'">Show</a>';
+                    $button .= ' <a class="btn btn-primary" href="'. route('roles.edit',$data->id).'">Edit</a>';
+                    $button .= '<form method="POST" action="'.route('roles.destroy',$data->id).'" accept-charset="UTF-8" style="display:inline">';
+                    $button .= ' <input name="_method" type="hidden" value="DELETE">';
+                    $button .= '<input name="_token" type="hidden" value="'.csrf_token().'">';
+                    $button .= '<input class="btn btn-danger" type="submit" value="Delete">';
+                    $button .= '</form>';
+                    return $button;
+                })
+                ->rawColumns(['action'])
+                ->make(true);
+        }
+        return view('roles.index');
     }
 
     /**

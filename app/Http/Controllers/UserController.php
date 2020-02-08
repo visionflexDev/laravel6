@@ -18,9 +18,31 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
-        $data = User::orderBy('id','DESC')->paginate(5);
-        return view('users.index',compact('data'))
-            ->with('i', ($request->input('page', 1) - 1) * 5);
+        if (request()->ajax()) {
+            return datatables()->of(User::latest()->get())
+                ->addColumn('roles', function($data){
+                    $button='';
+                    if(!empty($data->getRoleNames())){
+                      foreach($data->getRoleNames() as $v){
+                         $button .= '<label class="badge badge-success">'.$v.'</label>';
+                      }
+                    }
+                    return $button;
+                })
+                ->addColumn('action', function($data){
+                    $button ='<a class="btn btn-info" href="'.route('users.show',$data->id).'">Show</a>';
+                    $button .= ' <a class="btn btn-primary" href="'. route('users.edit',$data->id).'">Edit</a>';
+                    $button .= '<form method="POST" action="'.route('users.destroy',$data->id).'" accept-charset="UTF-8" style="display:inline">';
+                    $button .= ' <input name="_method" type="hidden" value="DELETE">';
+                    $button .= '<input name="_token" type="hidden" value="'.csrf_token().'">';
+                    $button .= '<input class="btn btn-danger" type="submit" value="Delete">';
+                    $button .= '</form>';
+                    return $button;
+                })
+                ->rawColumns(['roles','action'])
+                ->make(true);
+        }
+        return view('users.index');
     }
 
     /**
